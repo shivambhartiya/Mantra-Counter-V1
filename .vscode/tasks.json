@@ -1,0 +1,15 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "flutter test",
+			"type": "shell",
+			"command": "flutter test --concurrency=1",
+			"isBackground": false,
+			"problemMatcher": [
+				"$dart-cli"
+			],
+			"group": "test"
+		}
+	]
+}
