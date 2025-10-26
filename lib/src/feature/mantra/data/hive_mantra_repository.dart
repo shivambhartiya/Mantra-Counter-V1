@@ -6,6 +6,7 @@ class HiveMantraRepository implements MantraRepository {
 
   static const _countKey = 'count';
   static const _wordKey = 'targetWord';
+  static const _wordsKey = 'targetWords';
 
   final Box _box;
 
@@ -21,4 +22,30 @@ class HiveMantraRepository implements MantraRepository {
 
   @override
   Future<void> setTargetWord(String word) async => _box.put(_wordKey, word);
+
+  @override
+  Future<List<String>> getTargetMantras() async {
+    // Prefer the new list if available
+    final list = _box.get(_wordsKey);
+    if (list is List) {
+      return list.map((e) => e.toString()).toList();
+    }
+    // Fallback to single word for backward compatibility
+    final single = await getTargetWord();
+    return [single];
+  }
+
+  @override
+  Future<void> setTargetMantras(List<String> mantras) async {
+    final cleaned = mantras
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toSet()
+        .toList();
+    await _box.put(_wordsKey, cleaned);
+    // Also set the first as single word for backward compatibility
+    if (cleaned.isNotEmpty) {
+      await _box.put(_wordKey, cleaned.first);
+    }
+  }
 }

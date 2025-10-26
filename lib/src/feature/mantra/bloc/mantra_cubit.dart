@@ -15,15 +15,16 @@ class MantraCubit extends Cubit<MantraState> {
   final HybridSpeechService _speech;
   String _lastRecognizedText = '';
   DateTime? _lastIncrementTime;
+  int _lastMatchOccurrences = 0;
 
   Future<void> load() async {
     emit(state.copyWith(status: MantraStatus.loading));
     try {
       final count = await _repository.getCount();
-      final word = await _repository.getTargetWord();
+      final mantras = await _repository.getTargetMantras();
       emit(state.copyWith(
         count: count,
-        targetWord: word,
+        targetMantras: mantras,
         status: MantraStatus.ready,
       ));
     } catch (e) {
@@ -43,8 +44,20 @@ class MantraCubit extends Cubit<MantraState> {
   }
 
   Future<void> setTargetWord(String word) async {
-    emit(state.copyWith(targetWord: word));
-    await _repository.setTargetWord(word);
+    // Keep compatibility: replace the list with a single item
+    final list = [word];
+    emit(state.copyWith(targetMantras: list));
+    await _repository.setTargetMantras(list);
+  }
+
+  Future<void> setTargetMantras(List<String> mantras) async {
+    final cleaned = mantras
+        .map((e) => e.trim().toLowerCase())
+        .where((e) => e.isNotEmpty)
+        .toSet()
+        .toList();
+    emit(state.copyWith(targetMantras: cleaned));
+    await _repository.setTargetMantras(cleaned);
   }
 
   Future<void> toggleListening() async {
@@ -53,6 +66,7 @@ class MantraCubit extends Cubit<MantraState> {
       emit(state.copyWith(listening: false));
       _lastRecognizedText = '';
       _lastIncrementTime = null;
+      _lastMatchOccurrences = 0;
       return;
     }
     final ok = await _speech.initialize(onError: (error) {
@@ -63,6 +77,7 @@ class MantraCubit extends Cubit<MantraState> {
     emit(state.copyWith(listening: true));
     _lastRecognizedText = '';
     _lastIncrementTime = null;
+    _lastMatchOccurrences = 0;
     
     await _speech.start(
       onPartial: (text) {
@@ -72,6 +87,7 @@ class MantraCubit extends Cubit<MantraState> {
         emit(state.copyWith(listening: false));
         _lastRecognizedText = '';
         _lastIncrementTime = null;
+        _lastMatchOccurrences = 0;
       },
       onError: (error) {
         emit(state.copyWith(status: MantraStatus.failure, error: error));
@@ -80,27 +96,73 @@ class MantraCubit extends Cubit<MantraState> {
   }
 
   void _processSpeechText(String text) {
-    final normalized = text.toLowerCase().trim();
-    final trigger = state.targetWord.trim().toLowerCase();
-    
-    if (trigger.isEmpty || normalized.isEmpty) return;
-    
-    // Only process if this is new text (not a duplicate)
-    if (normalized == _lastRecognizedText) return;
-    
-    // Check if the text contains the target word as a complete word
-    final words = normalized.split(RegExp(r'\s+'));
-    final hasTargetWord = words.any((word) => word == trigger);
-    
-    if (hasTargetWord) {
-      // Debounce: only allow one increment per 500ms
-      final now = DateTime.now();
-      if (_lastIncrementTime == null || 
-          now.difference(_lastIncrementTime!).inMilliseconds > 500) {
-        _lastRecognizedText = normalized;
-        _lastIncrementTime = now;
-        increment(1);
+    final normalized = text
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z\s]'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    final triggers = state.targetMantras.map((e) => e.trim().toLowerCase()).where((e) => e.isNotEmpty).toList();
+    if (triggers.isEmpty || normalized.isEmpty) return;
+    // Build regex patterns with word boundaries and transliteration variants
+    final List<RegExp> patterns = _buildPatternsForTriggers(triggers);
+
+    // Count total occurrences across all patterns in the current partial
+    int totalMatches = 0;
+    for (final p in patterns) {
+      totalMatches += p.allMatches(normalized).length;
+    }
+
+    // If occurrences increased compared to previous partial, increment by the delta
+    if (totalMatches > _lastMatchOccurrences) {
+      final delta = totalMatches - _lastMatchOccurrences;
+      _lastIncrementTime = DateTime.now();
+      increment(delta);
+    }
+
+    _lastMatchOccurrences = totalMatches;
+    _lastRecognizedText = normalized;
+  }
+
+  List<RegExp> _buildPatternsForTriggers(List<String> triggers) {
+    final List<RegExp> patterns = <RegExp>[];
+    for (final t in triggers) {
+      final trimmed = t.replaceAll(RegExp(r'\s+'), ' ').trim();
+      if (trimmed.isEmpty) continue;
+
+      if (trimmed.contains(' ')) {
+        final words = trimmed.split(' ');
+        final regexWords = <String>[];
+        for (final w in words) {
+          regexWords.add(_wordPattern(w));
+        }
+        final phrase = regexWords.join('\\s+');
+        patterns.add(RegExp('\\b' + phrase + '\\b'));
+      } else {
+        patterns.add(RegExp('\\b' + _wordPattern(trimmed) + '\\b'));
       }
     }
+    return patterns;
+  }
+
+  String _wordPattern(String word) {
+    final w = word.toLowerCase();
+    // Om variants
+    if (w == 'om' || w == 'aum' || w == 'ohm' || w == 'um') {
+      return '(?:om|aum|ohm|um)';
+    }
+    // Namah/Namaha
+    if (w == 'namah' || w == 'namaha') {
+      return 'namaha?';
+    }
+    // Shivay/Shivaya
+    if (w == 'shivay' || w == 'shivaya') {
+      return 'shivaya?';
+    }
+    // Krishna transliterations
+    if (w == 'krishna' || w == 'krsna' || w == 'krushna') {
+      return '(?:krishna|krsna|krushna)';
+    }
+    // Rama transliterations could be added similarly if needed
+    return RegExp.escape(w);
   }
 }

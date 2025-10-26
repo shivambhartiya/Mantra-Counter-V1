@@ -99,7 +99,7 @@ class _Body extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Target word input section
+          // Target word/mantras section
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -119,7 +119,7 @@ class _Body extends StatelessWidget {
                     Icon(Icons.edit_note, color: Color(0xFF6366F1), size: 20),
                     SizedBox(width: 8),
                     Text(
-                      'Target Word',
+                      'Target Mantras',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -129,26 +129,41 @@ class _Body extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
+                // Preset chips
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _PresetChip(label: 'Om'),
+                    _PresetChip(label: 'Hare krishna'),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Current selected mantras as chips with delete
                 BlocBuilder<MantraCubit, MantraState>(
-                  buildWhen: (p, c) => p.targetWord != c.targetWord,
+                  buildWhen: (p, c) => p.targetMantras != c.targetMantras,
                   builder: (context, state) {
-                    return TextFormField(
-                      key: const Key('targetWordField'),
-                      decoration: const InputDecoration(
-                        hintText: 'Enter your mantra word...',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF1F2937),
-                      ),
-                      initialValue: state.targetWord,
-                      onFieldSubmitted: (value) => context.read<MantraCubit>().setTargetWord(value),
+                    final mantras = state.targetMantras;
+                    return Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final m in mantras)
+                          Chip(
+                            label: Text(m),
+                            deleteIcon: const Icon(Icons.close, size: 18),
+                            onDeleted: () {
+                              final next = List<String>.from(mantras)..remove(m);
+                              context.read<MantraCubit>().setTargetMantras(next.isEmpty ? [state.targetWord] : next);
+                            },
+                          ),
+                      ],
                     );
                   },
                 ),
+                const SizedBox(height: 12),
+                // Add custom mantra input
+                _AddMantraField(),
               ],
             ),
           ),
@@ -421,5 +436,82 @@ class _FabState extends State<_Fab> with TickerProviderStateMixin {
         );
       },
     );
+  }
+}
+
+class _PresetChip extends StatelessWidget {
+  const _PresetChip({required this.label});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<MantraCubit, MantraState>(
+      buildWhen: (p, c) => p.targetMantras != c.targetMantras,
+      builder: (context, state) {
+        final isSelected = state.targetMantras.map((e) => e.toLowerCase()).contains(label.toLowerCase());
+        return FilterChip(
+          label: Text(label),
+          selected: isSelected,
+          onSelected: (value) {
+            final current = List<String>.from(state.targetMantras);
+            if (value && !isSelected) {
+              current.add(label);
+            } else if (!value && isSelected) {
+              current.removeWhere((e) => e.toLowerCase() == label.toLowerCase());
+            }
+            context.read<MantraCubit>().setTargetMantras(current);
+          },
+        );
+      },
+    );
+  }
+}
+
+class _AddMantraField extends StatefulWidget {
+  @override
+  State<_AddMantraField> createState() => _AddMantraFieldState();
+}
+
+class _AddMantraFieldState extends State<_AddMantraField> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: _controller,
+            decoration: const InputDecoration(
+              hintText: 'Add custom mantra (e.g., Om namah shivaya)'
+            ),
+            onSubmitted: (_) => _add(context),
+          ),
+        ),
+        const SizedBox(width: 12),
+        ElevatedButton(
+          onPressed: () => _add(context),
+          child: const Text('Add'),
+        ),
+      ],
+    );
+  }
+
+  void _add(BuildContext context) {
+    final value = _controller.text.trim();
+    if (value.isEmpty) return;
+    final cubit = context.read<MantraCubit>();
+    final current = List<String>.from(cubit.state.targetMantras);
+    if (!current.map((e) => e.toLowerCase()).contains(value.toLowerCase())) {
+      current.add(value);
+      cubit.setTargetMantras(current);
+    }
+    _controller.clear();
   }
 }

@@ -43,3 +43,16 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# --------------------------------------------------
+# Models and large assets (ignored to avoid GitHub push issues)
+assets/vosk_model/
+*.pt
+*.pth
+*.onnx
+*.h5
+*.ckpt
+*.tflite
+*.zip
+*.tar
+*.gz

@@ -7,6 +7,7 @@ class MantraState extends Equatable {
     this.count = 0,
     this.listening = false,
     this.targetWord = 'hello',
+    this.targetMantras = const ['hello'],
     this.status = MantraStatus.initial,
     this.error,
   });
@@ -14,6 +15,7 @@ class MantraState extends Equatable {
   final int count;
   final bool listening;
   final String targetWord;
+  final List<String> targetMantras;
   final MantraStatus status;
   final String? error;
 
@@ -21,6 +23,7 @@ class MantraState extends Equatable {
     int? count,
     bool? listening,
     String? targetWord,
+    List<String>? targetMantras,
     MantraStatus? status,
     String? error,
   }) {
@@ -28,11 +31,12 @@ class MantraState extends Equatable {
       count: count ?? this.count,
       listening: listening ?? this.listening,
       targetWord: targetWord ?? this.targetWord,
+      targetMantras: targetMantras ?? this.targetMantras,
       status: status ?? this.status,
       error: error ?? this.error,
     );
   }
 
   @override
-  List<Object?> get props => [count, listening, targetWord, status, error];
+  List<Object?> get props => [count, listening, targetWord, targetMantras, status, error];
 }
