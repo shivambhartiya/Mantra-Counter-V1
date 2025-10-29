@@ -3,7 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hive/hive.dart';
 
-import 'src/app/app.dart';
+// Use a relative import to your App widget
+import 'src/app/app.dart'; 
 import 'src/feature/mantra/bloc/mantra_cubit.dart';
 import 'src/feature/mantra/data/hive_mantra_repository.dart';
 import 'src/feature/mantra/data/mantra_repository.dart';
@@ -23,6 +24,7 @@ Future<void> main() async {
           create: (_) => MantraCubit(repository: repo, speech: speech)..load(),
         ),
       ],
+      // This is correct - just run the App widget
       child: const App(),
     ),
   );

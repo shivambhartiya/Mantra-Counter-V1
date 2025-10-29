@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.9.2
+  sdk: '>=3.9.2 <4.0.0' # Corrected indentation and specify upper bound
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -31,6 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
 
+  google_fonts: ^6.2.1
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -56,7 +57,7 @@ dev_dependencies:
   flutter_lints: ^5.0.0
 
 # For information on the generic Dart part of this file, see the
-# following page: https://dart.dev/tools/pub/pubspec
+# following page: https://dart.dev/tools/pub/spec
 
 # The following section is specific to Flutter packages.
 flutter:
@@ -76,17 +77,5 @@ flutter:
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/to/asset-from-package
 
-  fonts:
-    - family: YatraOne
-      fonts:
-        - asset: https://fonts.gstatic.com/s/yatraone/v15/C8ch4copsHzj8p7NaF0xw1OBbRDvXw.ttf
-    - family: Inter
-      fonts:
-        - asset: https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiA.ttf
-          weight: 400
-        - asset: https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYAZ9hiA.ttf
-          weight: 500
-        - asset: https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuI6fAZ9hiA.ttf
-          weight: 600
-        - asset: https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuDyfAZ9hiA.ttf
-          weight: 700
+  # The conflicting 'fonts:' section has been removed.
+  # Your 'google_fonts: ^6.2.1' dependency will now handle the fonts.
