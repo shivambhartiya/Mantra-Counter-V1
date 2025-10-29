@@ -56,3 +56,4 @@ assets/vosk_model/
 *.zip
 *.tar
 *.gz
+.env
