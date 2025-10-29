@@ -158,11 +158,18 @@ class MantraCubit extends Cubit<MantraState> {
     if (w == 'shivay' || w == 'shivaya') {
       return 'shivaya?';
     }
-    // Krishna transliterations
-    if (w == 'krishna' || w == 'krsna' || w == 'krushna') {
-      return '(?:krishna|krsna|krushna)';
+    // Hare variants
+    if (w == 'hare' || w == 'hari' || w == 'haray') {
+      return '(?:hare|hari|haray)';
     }
-    // Rama transliterations could be added similarly if needed
+    // Krishna transliterations
+    if (w == 'krishna' || w == 'krsna' || w == 'krushna' || w == 'krsna' || w == 'kṛṣṇa') {
+      return '(?:krishna|krsna|krushna|k[rṛ]s?[nṇ]a)';
+    }
+    // Ram/Rama transliterations
+    if (w == 'ram' || w == 'rama' || w == 'raam') {
+      return '(?:ram|rama|raam|r[aā]ma?)';
+    }
     return RegExp.escape(w);
   }
 }

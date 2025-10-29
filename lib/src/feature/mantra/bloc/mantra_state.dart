@@ -6,8 +6,8 @@ class MantraState extends Equatable {
   const MantraState({
     this.count = 0,
     this.listening = false,
-    this.targetWord = 'hello',
-    this.targetMantras = const ['hello'],
+    this.targetWord = 'hare krishna hare krishna krishna krishna hare hare hare ram hare ram ram ram hare hare',
+    this.targetMantras = const ['hare krishna hare krishna krishna krishna hare hare hare ram hare ram ram ram hare hare'],
     this.status = MantraStatus.initial,
     this.error,
   });
